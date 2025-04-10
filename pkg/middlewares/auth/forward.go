@@ -123,8 +123,13 @@ func (fa *forwardAuth) GetTracingInformation() (string, string, trace.SpanKind) 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), fa.name, typeNameForward)
 
-	fa.address = strings.ReplaceAll(fa.address, "{escaped_request_uri}", fmt.Sprintf("https://%s%s", req.Host, req.URL.EscapedPath()))
-	forwardReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.address, nil)
+	forwardReq, err := http.NewRequestWithContext(
+		req.Context(),
+		http.MethodGet,
+		strings.ReplaceAll(fa.address, "{escaped_request_uri}", fmt.Sprintf("https://%s%s", req.Host, req.URL.EscapedPath())),
+		nil,
+	)
+	// logger.Info().Msgf("redirecting to %s original fa.address is %s", strings.ReplaceAll(fa.address, "{escaped_request_uri}", fmt.Sprintf("https://%s%s", req.Host, req.URL.EscapedPath())), fa.address)
 	if err != nil {
 		logger.Debug().Msgf("Error calling %s. Cause %s", fa.address, err)
 		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause %s", fa.address, err)
